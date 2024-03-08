@@ -1,4 +1,35 @@
-spring:
-  oauth:
-    a:
-    b:
+ spring:
+  profiles:
+    active: local
+    group:
+      local: local,common,secret
+
+---
+
+ spring:
+   config:
+     activate:
+       on-profile: local
+
+---
+
+ spring:
+   config:
+     activate:
+       on-profile: common
+
+---
+
+
+ spring:
+   config:
+     activate:
+       on-profile: secret
+
+---
+
+mybatis:
+  mapper-locations:
+    - /mappers/*.xml
+
+

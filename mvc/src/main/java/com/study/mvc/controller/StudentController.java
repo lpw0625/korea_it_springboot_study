@@ -9,6 +9,8 @@ import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -20,30 +22,43 @@ public class StudentController {
 
     //===========postman 요청
     @PostMapping("/student")
-    public ResponseEntity<?> addStudent(@CookieValue String students, @RequestBody Student student) throws JsonProcessingException { // 파라미터 요청을 할때 RequestBody를 쓴다 왜? JSON때문에// JSON이 아니면 RequestBody를 빼야한다.
+    public ResponseEntity<?> addStudent(@CookieValue(required = false) String students, @RequestBody Student student) throws JsonProcessingException, UnsupportedEncodingException { // 파라미터 요청을 할때 RequestBody를 쓴다 왜? JSON때문에// JSON이 아니면 RequestBody를 빼야한다.
+        ObjectMapper objectMapper = new ObjectMapper();
+
         List<Student> studentList = new ArrayList<>();
         int lastId = 0;
+
+        System.out.println(students);
+
         if(students != null) {
             if(!students.isBlank()) {
-                ObjectMapper studentsCookie = new ObjectMapper();
-                studentList = studentsCookie.readValue(students, List.class);
+                for(Object object : objectMapper.readValue(students, List.class)) {
+
+                    Map<String, Object> studentMap = (Map<String, Object>) object; // Map으로 다운 캐스팅.
+                    studentList.add(objectMapper.convertValue(studentMap, Student.class)); //convertValue : Map을 studentList객체로 바꿀것이다
+
+                }
                 lastId = studentList.get(studentList.size() - 1).getStudentId();
             }
-
         }
-        student.setStudentId(lastId + 1);
+
+        student.setStudentId(lastId + 1); // student : 요청때 보내준 JSON 데이터
         studentList.add(student);
 
-        ObjectMapper newStudentList = new ObjectMapper();
-        String newStudents = newStudentList.writeValueAsString(studentList);
+        String studentListJson = objectMapper.writeValueAsString(studentList);
+
+        System.out.println(studentListJson);
+
+        // 쿠키 객체를 만듬
         ResponseCookie responseCookie = ResponseCookie
-                .from("students", newStudents)
+                .from("students", URLEncoder.encode(studentListJson, "UTF-8"))// students : 쿠키의 키값
                 .httpOnly(true)
                 .secure(true)
                 .path("/")
                 .maxAge(60)
                 .domain("localhost:8080")
                 .build();
+
         // Cookie : " 문자 저장이 x
 
         return ResponseEntity
@@ -105,6 +120,9 @@ public class StudentController {
        return ResponseEntity.ok().body(findStudent);
         }
 }
+
+
+
 /*
         StudentInfo studentInfo = new StudentInfo();
         studentInfo.setStudentname("이평원");
@@ -118,4 +136,5 @@ public class StudentController {
 // ResponseEntity<?> : 내가 들어갈 데이터를 입력을 한다. 명시하는걸 좋지만 그러면 코드가 난잡해질수도 있다.
 // ResponseEntity : 이걸 쓰게되면 상태코드를 바꿔줄 수 있다.  ***
 // PathVariable ***
+// @RequestBody *** json 때문에 쓰는 것 .
 // 이걸 안쓰면 리엑트에서 querySelector를 쓰지 말라는 것과 같다는 의미이다.

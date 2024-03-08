@@ -25,3 +25,5 @@ public class StudyRestController {
 }
 
 //RestController : Html은 따로 만들수는 없지만 이 컨트롤러는 모두 데이터로 응답 받는다.
+// 응답을 할땐 데이터만 바꿔줄 수 있는 게 아니다.
+// 응답 헤더, 응답 데이터 , 바디
